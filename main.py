@@ -6,6 +6,7 @@ from pathlib import Path
 
 from collections.abc import Callable, Iterable
 
+logger = logging.getLogger("DuplicatesFinder")
 
 def full_hash(file_path: str) -> str:
     hasher = hashlib.sha256()
@@ -15,7 +16,6 @@ def full_hash(file_path: str) -> str:
     return hasher.hexdigest()
 
 
-
 def size(file_path: str) -> str:
     return str(os.path.getsize(file_path))
 
@@ -23,11 +23,11 @@ def size(file_path: str) -> str:
 def group(files: Iterable[str], classifier: Callable[[str], str]) -> dict[str, list[str]]:
     files = list(files)
     total_files = len(files)
-    logging.info("Grouping %d files", total_files)
+    logger.info("Grouping %d files", total_files)
 
     groups = {}
     for index, file in enumerate(files, start=1):
-        logging.info("Analyzing file %d/%d", index, total_files)
+        logger.info("Analyzing file %d/%d", index, total_files)
         if not os.path.isfile(file):
             continue
         key = classifier(file)
@@ -81,11 +81,15 @@ def main() -> None:
     classified_by_full_hash = group(candidates, full_hash)
     duplicates = {file_hash: files for file_hash, files in classified_by_full_hash.items() if len(files) > 1}
 
-    for file_hash, files in duplicates.items():
-        print()
-        print(file_hash)
-        for file in files:
-            print(file)
+    if not duplicates:
+        logger.info(f"No duplicates found in {root_directory}")
+    else:
+        logger.info(f"The following files seem to be duplicates")
+        for file_hash, files in duplicates.items():
+            print()
+            print(f"Hash: {file_hash}")
+            for file in files:
+                print(f"\t{file}")
 
 
 if __name__ == "__main__":
