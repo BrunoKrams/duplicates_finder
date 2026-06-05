@@ -8,7 +8,6 @@ from collections.abc import Callable, Iterable
 
 
 def full_hash(file_path: str) -> str:
-    logging.info(f"Calculating hash for {file_path}")
     hasher = hashlib.sha256()
     with open(file_path, "rb") as file_handle:
         for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
@@ -22,8 +21,13 @@ def size(file_path: str) -> str:
 
 
 def group(files: Iterable[str], classifier: Callable[[str], str]) -> dict[str, list[str]]:
+    files = list(files)
+    total_files = len(files)
+    logging.info("Grouping %d files", total_files)
+
     groups = {}
-    for file in files:
+    for index, file in enumerate(files, start=1):
+        logging.info("Analyzing file %d/%d", index, total_files)
         if not os.path.isfile(file):
             continue
         key = classifier(file)
@@ -85,5 +89,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-
+    logging.basicConfig(level=logging.INFO)
     main()
